@@ -1,0 +1,16 @@
+
+lsquid:S1301"KReplace this "switch" statement by "if" statements to increase readability.(×“¾ñùÿÿÿÿ8å“‚,
+Ksquid:S2696"6Make the enclosing method "static" or remove this set.(öÕ®ê
+Psquid:S2696"6Make the enclosing method "static" or remove this set.(­‘Ç üÿÿÿÿ
+Ksquid:S2696"6Make the enclosing method "static" or remove this set.(ŠàÏá
+Z"squid:SwitchLastCaseIsDefaultCheck""Add a default case to this switch.(×“¾ñùÿÿÿÿ8å“‚,
+Ksquid:S2696"6Make the enclosing method "static" or remove this set.(‚Ÿç
+Wsquid:S2696"6Make the enclosing method "static" or remove this set.(Ê¦²¦ùÿÿÿÿ8å“‚,
+Psquid:S2696"6Make the enclosing method "static" or remove this set.(±øıìÿÿÿÿÿ
+Ksquid:S2696"6Make the enclosing method "static" or remove this set.(Åèä§
+Psquid:S2696"6Make the enclosing method "static" or remove this set.(ÿ£å÷üÿÿÿÿ
+Ksquid:S2696"6Make the enclosing method "static" or remove this set.(î¡¡å
+Wsquid:S2696"6Make the enclosing method "static" or remove this set.(ÛˆŒ­ıÿÿÿÿ8å“‚,
+Wsquid:S2696"6Make the enclosing method "static" or remove this set.(¶×™ÿÿÿÿÿ8å“‚,
+Wsquid:S2696"6Make the enclosing method "static" or remove this set.(Óã“ßùÿÿÿÿ8å“‚,
+Fsquid:S00108")Either remove or fill this block of code.(”ı¾8å“‚,

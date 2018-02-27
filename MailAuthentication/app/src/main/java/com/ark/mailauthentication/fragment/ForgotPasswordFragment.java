@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,12 +14,16 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ark.mailauthentication.R;
-import com.ark.mailauthentication.activity.MainActivity;
-import com.ark.mailauthentication.util.ToastTemplate;
+import com.ark.mailauthentication.activity.AuthendicateActivity;
+import com.ark.mailauthentication.util.AppConstants;
+import com.ark.mailauthentication.util.ErrorToastTemplate;
+import com.ark.mailauthentication.util.SuccessToastTemplate;
 import com.ark.mailauthentication.util.Utils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,9 +35,12 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
     private static View rootView;
 
     private static EditText emailId;
-    private static TextView submit, back;
+    private static TextView submit;
+    private static TextView back;
 
     private static Animation shakeAnimation;
+
+    private FirebaseAuth mAuth;
 
     public ForgotPasswordFragment() {
         // Required empty public constructor
@@ -45,8 +53,16 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
         // Inflate the layout for this fragment
         rootView = inflater.inflate(R.layout.fragment_forgot_password, container, false);
         initViews();
+        initFirebase();
         setListeners();
         return rootView;
+    }
+
+    /**
+     * Initialize firebase database
+     */
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
     }
 
     /**
@@ -72,6 +88,7 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
             submit.setTextColor(csl);
 
         } catch (Exception e) {
+            // Do nothing
         }
     }
 
@@ -90,7 +107,7 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
             case R.id.backToLoginBtn:
 
                 // Replace Login Fragment on Back Presses
-                new MainActivity().replaceLoginFragment();
+                new AuthendicateActivity().replaceLoginFragment();
                 break;
 
             case R.id.forgot_button:
@@ -98,6 +115,7 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
                 // Call Submit button task
                 submitButtonTask();
                 break;
+            default://Do nothing
 
         }
     }
@@ -106,27 +124,60 @@ public class ForgotPasswordFragment extends Fragment implements View.OnClickList
         String getEmailId = emailId.getText().toString();
 
         // Pattern for email id validation
-        Pattern p = Pattern.compile(Utils.regEx);
+        Pattern p = Pattern.compile(Utils.REG_EX);
 
         // Match the pattern
         Matcher m = p.matcher(getEmailId);
 
         // First check if email id is not null else show error toast
         if (getEmailId.equals("") || getEmailId.length() == 0) {
-            new ToastTemplate().show_Toast(getActivity(), rootView,
+            new ErrorToastTemplate().showToast(getActivity(), rootView,
                     "Please enter your Email Id.");
             emailId.startAnimation(shakeAnimation);
         }
 
         // Check if email id is valid or not
         else if (!m.find()) {
-            new ToastTemplate().show_Toast(getActivity(), rootView,
+            new ErrorToastTemplate().showToast(getActivity(), rootView,
                     "Your Email Id is Invalid.");
             emailId.startAnimation(shakeAnimation);
         }
         // Else submit email id and fetch passwod or do your stuff
         else
-            Toast.makeText(getActivity(), "Get Forgot Password.",
-                    Toast.LENGTH_SHORT).show();
+            forgotPassword(getEmailId);
+    }
+
+    /**
+     * To communicate with user password
+     *
+     * @param getEmailId
+     */
+    private void forgotPassword(String getEmailId) {
+        final String mail = getEmailId;
+        mAuth.sendPasswordResetEmail(mail).addOnCompleteListener(new OnCompleteListener() {
+            @Override
+            public void onComplete(@NonNull Task task) {
+                if (task.isSuccessful()) {
+                    new SuccessToastTemplate().showToast(getActivity(), rootView, "Reset password send to " + mail);
+                    replaceLoginFragment(mail);
+                } else {
+                    new ErrorToastTemplate().showToast(getActivity(), rootView, task.getException().getMessage());
+                }
+            }
+        });
+
+    }
+
+
+    private void replaceLoginFragment(String emailId) {
+        Bundle args = new Bundle();
+        args.putString(AppConstants.USER_EMAIL, emailId);
+        LoginFragment loginFragment = new LoginFragment();
+        loginFragment.setArguments(args);
+        getFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.left_enter, R.anim.right_out)
+                .replace(R.id.frameContainer, loginFragment,
+                        Utils.LOGIN_FRAGMENT).commit();
     }
 }

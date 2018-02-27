@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "429731786164",
+    "firebase_url": "https://mailauthentication-643c0.firebaseio.com",
+    "project_id": "mailauthentication-643c0",
+    "storage_bucket": "mailauthentication-643c0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429731786164:android:c2efe4d0bb8dc4f6",
+        "android_client_info": {
+          "package_name": "com.ark.mailauthentication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "429731786164-e8nkkk724d0032fmrglfhbg5l4eqjfc6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ark.mailauthentication",
+            "certificate_hash": "abc252d6e9034418564518cd0aab76f160e16afc"
+          }
+        },
+        {
+          "client_id": "429731786164-oup9k7rrq1p5n79capb4g2knk9d26tj5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcZVWr_OYtU4weoxuAz4VhNOmr2lPFgWo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "429731786164-oup9k7rrq1p5n79capb4g2knk9d26tj5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

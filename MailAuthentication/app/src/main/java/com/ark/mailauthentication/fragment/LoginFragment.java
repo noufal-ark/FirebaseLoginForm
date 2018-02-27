@@ -2,9 +2,11 @@ package com.ark.mailauthentication.fragment;
 
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.InputType;
@@ -21,11 +23,17 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ark.mailauthentication.R;
-import com.ark.mailauthentication.util.ToastTemplate;
+import com.ark.mailauthentication.activity.HomeActivity;
+import com.ark.mailauthentication.util.AdvancedSharedPreference;
+import com.ark.mailauthentication.util.AppConstants;
+import com.ark.mailauthentication.util.ErrorToastTemplate;
 import com.ark.mailauthentication.util.Utils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,12 +45,16 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
     private static View rootView;
     private static FragmentManager fragmentManager;
 
-    private static EditText emailid, password;
+    private static EditText emailid;
+    private static EditText password;
     private static Button loginButton;
-    private static TextView forgotPassword, signUp;
-    private static CheckBox show_hide_password;
+    private static TextView forgotPassword;
+    private static TextView signUp;
+    private static CheckBox showHidePassword;
     private static LinearLayout loginLayout;
     private static Animation shakeAnimation;
+    private FirebaseAuth mAuth;
+    private AdvancedSharedPreference advPreference;
 
     public LoginFragment() {
         // Required empty public constructor
@@ -54,9 +66,28 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         rootView = inflater.inflate(R.layout.fragment_login, container, false);
+        advPreference = new AdvancedSharedPreference(getContext());
         initViews();
+        initFirebase();
+        setBundle();
         setListeners();
         return rootView;
+    }
+
+    private void setBundle() {
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+            emailid.setText(bundle.getString(AppConstants.USER_EMAIL));
+            password.setText(bundle.getString(AppConstants.USER_PASS));
+        }
+    }
+
+
+    /**
+     * Initialize firebase database
+     */
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
     }
 
     /**
@@ -70,7 +101,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
         loginButton = rootView.findViewById(R.id.loginBtn);
         forgotPassword = rootView.findViewById(R.id.forgot_password);
         signUp = rootView.findViewById(R.id.createAccount);
-        show_hide_password = rootView.findViewById(R.id.show_hide_password);
+        showHidePassword = rootView.findViewById(R.id.show_hide_password);
         loginLayout = rootView.findViewById(R.id.login_layout);
 
         /**
@@ -86,10 +117,12 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
             ColorStateList csl = ColorStateList.createFromXml(getResources(), xrp);
 
             forgotPassword.setTextColor(csl);
-            show_hide_password.setTextColor(csl);
+            showHidePassword.setTextColor(csl);
             signUp.setTextColor(csl);
         } catch (Exception e) {
+            // Do nothing
         }
+
     }
 
     /**
@@ -99,7 +132,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
         loginButton.setOnClickListener(this);
         forgotPassword.setOnClickListener(this);
         signUp.setOnClickListener(this);
-        show_hide_password.setOnCheckedChangeListener(this);
+        showHidePassword.setOnCheckedChangeListener(this);
     }
 
     @Override
@@ -115,7 +148,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
                 fragmentManager
                         .beginTransaction()
                         .setCustomAnimations(R.anim.right_enter, R.anim.left_out)
-                        .replace(R.id.frameContainer, new ForgotPasswordFragment(), Utils.ForgotPasswordFragment).commit();
+                        .replace(R.id.frameContainer, new ForgotPasswordFragment(), Utils.FORGOT_PASS_FRAGMENT).commit();
                 break;
             case R.id.createAccount:
 
@@ -123,8 +156,9 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
                 fragmentManager
                         .beginTransaction()
                         .setCustomAnimations(R.anim.right_enter, R.anim.left_out)
-                        .replace(R.id.frameContainer, new SignupFragment(), Utils.SignUpFragment).commit();
+                        .replace(R.id.frameContainer, new SignupFragment(), Utils.SIGN_UP_FRAGMENT).commit();
                 break;
+            default://Do nothing
         }
     }
 
@@ -134,14 +168,14 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
         // password
         if (isChecked) {
 
-            show_hide_password.setText(R.string.hide_pwd);// change
+            showHidePassword.setText(R.string.hide_pwd);// change
             // checkbox
             // text
 
             password.setInputType(InputType.TYPE_CLASS_TEXT);
             password.setTransformationMethod(HideReturnsTransformationMethod.getInstance());// show password
         } else {
-            show_hide_password.setText(R.string.show_pwd);// change
+            showHidePassword.setText(R.string.show_pwd);// change
             // checkbox
             // text
 
@@ -160,7 +194,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
         String getPassword = password.getText().toString();
 
         // Check pattern for email id
-        Pattern p = Pattern.compile(Utils.regEx);
+        Pattern p = Pattern.compile(Utils.REG_EX);
 
         Matcher m = p.matcher(getEmailId);
 
@@ -168,18 +202,52 @@ public class LoginFragment extends Fragment implements View.OnClickListener, Com
         if (getEmailId.equals("") || getEmailId.length() == 0
                 || getPassword.equals("") || getPassword.length() == 0) {
             loginLayout.startAnimation(shakeAnimation);
-            new ToastTemplate().show_Toast(getActivity(), rootView,"Enter both credentials.");
+            new ErrorToastTemplate().showToast(getActivity(), rootView, "Enter both credentials.");
 
         }
         // Check if email id is valid or not
-        else if (!m.find()){
+        else if (!m.find()) {
             emailid.startAnimation(shakeAnimation);
-            new ToastTemplate().show_Toast(getActivity(), rootView,"Your Email Id is Invalid.");
+            new ErrorToastTemplate().showToast(getActivity(), rootView, "Your Email Id is Invalid.");
         }
-            // Else do login and do your stuff
+        // Else do login and do your stuff
         else
-            Toast.makeText(getActivity(), "Do Login.", Toast.LENGTH_SHORT)
-                    .show();
+            loginUser(getEmailId, getPassword);
 
+    }
+
+    private void loginUser(String getEmailId, String getPassword) {
+        mAuth.signInWithEmailAndPassword(getEmailId, getPassword).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful()) {
+                    if (mAuth.getCurrentUser().isEmailVerified()) {
+                        advPreference.putBoolean(AppConstants.REMINED_ME, true);
+                        openHomeActivity();
+                    } else {
+                        mAuth.getCurrentUser().sendEmailVerification().addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+
+                                    new ErrorToastTemplate().showToast(getActivity(), rootView, "Please verify your mail id");
+
+                                } else {
+                                    new ErrorToastTemplate().showToast(getActivity(), rootView, task.getException().getMessage());
+                                }
+                            }
+                        });
+                    }
+
+                } else {
+                    new ErrorToastTemplate().showToast(getActivity(), rootView, task.getException().getMessage());
+                }
+            }
+        });
+    }
+
+    private void openHomeActivity() {
+        getActivity().finish();
+        startActivity(new Intent(getContext(), HomeActivity.class));
     }
 }

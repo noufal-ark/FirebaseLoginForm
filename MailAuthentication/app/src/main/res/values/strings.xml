@@ -19,4 +19,9 @@
     <string name="back">Back</string>
     <string name="submit">Submit</string>
     <string name="hide_pwd">Hide Password</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="logout">Signout</string>
 </resources>
